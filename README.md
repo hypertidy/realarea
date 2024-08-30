@@ -119,11 +119,105 @@ plot(cellSize(luxaea1000)/prod(res(luxaea1000)))
 <img src="man/figures/README-area-2.png" width="100%" />
 
 So, unsurprsingly the local Albers Equal Area Conic projection is a
-better choice than UTM.
+better choice than UTM, but do we really care about that level of
+discrepancy? Probably not, but you can’t have a single rule that always
+works, it depends where, how long how wide, on the projection, what you
+need to measure, and what you are actually doing. :)
 
+When folks look for a crs, they often restrict themselves only to codes
+(e.g. EPSG) that are pre-defined, that can work ok for nations and
+particular well-mapped regions, but there’s no hard rule, you can define
+your own projection for particular purposes.
+
+What about other fun projections?
+
+``` r
+library(terra)
+library(sf)
+#> Linking to GEOS 3.12.1, GDAL 3.9.0, PROJ 9.3.1; sf_use_s2() is TRUE
+```
+
+``` r
+p <- vect(silicate::inlandwaters[5:6, ])
+#> old-style crs object detected; please recreate object with a recent sf::st_crs()
+#> old-style crs object detected; please recreate object with a recent sf::st_crs()
+```
+
+``` r
+
+utm <- crs_grid(p, "EPSG:32755")
+
+plot(cellSize(utm)/prod(res(utm)))
+plot(project(p, "EPSG:32755"), add = TRUE)
+```
+
+<img src="man/figures/README-vicgrid-1.png" width="100%" />
+
+``` r
+
+vicgrid <- crs_grid(p, "EPSG:7899")
+
+plot(cellSize(vicgrid)/prod(res(vicgrid)))
+plot(project(p, "EPSG:7899"), add = TRUE)
+```
+
+<img src="man/figures/README-vicgrid-2.png" width="100%" />
+
+What if we had a region like the Albers national projection used by GA?
+
+So, what does that look like?
+
+``` r
+albex <- c(112.85,153.69,-43.7,-9.86)
+bdy <- reproj::reproj_xy(vaster::vaster_boundary(c(32, 32), albex), 
+                         "EPSG:3577", source = "EPSG:4326")
+
+plot(bdy, asp = 1)
+```
+
+<img src="man/figures/README-vaster-1.png" width="100%" />
+
+``` r
+library(terra)
+p <- terra::vect(matrix(albex[c(1, 1, 2, 2, 1, 
+             3, 4, 4, 3, 3)], ncol = 2), type = "polygons", crs = "EPSG:4326")
+p <- terra::densify(p, 1000)
+grd <- crs_grid(p, "EPSG:3577")
+terra::plot(grd); plot(project(p, "EPSG:3577"), add = TRUE)
+```
+
+<img src="man/figures/README-albersgrid-1.png" width="100%" />
+
+``` r
+
+
+plot(cellSize(grd)/prod(res(grd)))
+oz <- vect(sds::CGAZ(), query = sds::CGAZ_sql("Australia"))
+plot(project(oz, "EPSG:3577"), add = TRUE)
+```
+
+<img src="man/figures/README-albersgrid-2.png" width="100%" />
+
+Let’s expand that out to Australia’s broader remit, this takes a bit of
+special handling and is teaching me something I needed to figure out …
 WIP
 
-## Code of Conduct
+``` r
+ozex <- c(55, 164, -90, -6)
+p <- terra::vect(matrix(ozex[c(1, 1, 2, 2, 1, 
+             3, 4, 4, 3, 3)], ncol = 2), type = "polygons", crs = "EPSG:4326")
+p <- terra::densify(p, 1000)
+grd <- crs_grid(p, "EPSG:3577")
+grd <- crop(grd, c(xmin(grd), xmax(grd), -7.5e6, ymax(grd)))
+agrd <- cellSize(grd)
+agrd[!agrd > 1e5] <- NA
+plot(agrd/prod(res(agrd)))
+m <- reproj::reproj_xy(do.call(cbind, maps::map(plot = F)[1:2]), "EPSG:3577", source = "EPSG:4326")
+lines(m)
+```
+
+<img src="man/figures/README-ozex-1.png" width="100%" /> \## Code of
+Conduct
 
 Please note that the realarea project is released with a [Contributor
 Code of
