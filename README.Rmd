@@ -1,0 +1,94 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# realarea
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The goal of realarea is to provide helpers to determine the actual area covered and the calculated area vs the "real" geographic area represented in a projected raster. 
+
+
+## Installation
+
+You can install the development version of realarea like so:
+
+``` r
+remotes::install_github("hypertidy/realarea")
+```
+
+## Example
+
+We have a shapefile and we want to assess suitability of a given map projection. 
+
+```{r example}
+library(realarea)
+
+luxshp <- system.file("ex/lux.shp", package="terra", mustWork = TRUE)
+lux <- terra::vect(luxshp)
+```
+
+With `crs_grid()` we can create a suitable raster grid from that vector data set. 
+
+By default we just get a nice grid from it in the native crs. 
+
+```{r crs_grid}
+crs_grid(lux)
+```
+
+But specify an actual map projection and we can get some more benefit, and with 'res' we can get exactly what we want: a raster from which we can calculate real-world area (with `terra::expanse()`) and compare that with the nominal cell size which is `prod(res(<x>))`. 
+
+
+```{r crs}
+crs <- "EPSG:23032"
+crs_grid(lux, crs = crs)
+
+luxutm1000 <- crs_grid(lux, crs = crs, res = 1000)
+luxaea1000 <- crs_grid(lux, crs = "+proj=aea +lon_0=6 +lat_0=50 +lat_1=50.1 +lat_2=49.4", res = 1000)
+```
+
+What is the total area of the input polygon?
+
+What do we get from the two projections?
+
+```{r area}
+library(terra)
+
+polyarea <- sum(expanse(lux))
+sqrt(polyarea)
+utmarea <- sum(values(mask(cellSize(luxutm1000), luxutm1000)), na.rm = TRUE)
+sqrt(utmarea)
+
+
+## this one is closest to the polygon area
+aeaarea <- sum(values(mask(cellSize(luxaea1000), luxaea1000)), na.rm = TRUE)
+sqrt(aeaarea)
+
+plot(cellSize(luxutm1000)/prod(res(luxutm1000)))
+
+plot(cellSize(luxaea1000)/prod(res(luxaea1000)))
+
+```
+
+
+So, unsurprsingly the local Albers Equal Area Conic projection is a better choice than UTM. 
+
+WIP
+
+
+
+## Code of Conduct
+  
+Please note that the realarea project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.
