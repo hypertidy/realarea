@@ -139,7 +139,8 @@ plot(bdy, asp = 1)
 library(terra)
 p <- terra::vect(matrix(albex[c(1, 1, 2, 2, 1, 
              3, 4, 4, 3, 3)], ncol = 2), type = "polygons", crs = "EPSG:4326")
-p <- terra::densify(p, 1000)
+p <- terra::densify(p, 1, flat = TRUE)  ## beware densify, we don't want great circles ...
+
 grd <- crs_grid(p, "EPSG:3577")
 terra::plot(grd); plot(project(p, "EPSG:3577"), add = TRUE)
 
@@ -164,6 +165,7 @@ plot(agrd/prod(res(agrd)))
 m <- reproj::reproj_xy(do.call(cbind, maps::map(plot = F)[1:2]), "EPSG:3577", source = "EPSG:4326")
 lines(m)
 ```
+
 ## Code of Conduct
   
 Please note that the realarea project is released with a [Contributor Code of Conduct](https://contributor-covenant.org/version/2/1/CODE_OF_CONDUCT.html). By contributing to this project, you agree to abide by its terms.

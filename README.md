@@ -181,7 +181,8 @@ plot(bdy, asp = 1)
 library(terra)
 p <- terra::vect(matrix(albex[c(1, 1, 2, 2, 1, 
              3, 4, 4, 3, 3)], ncol = 2), type = "polygons", crs = "EPSG:4326")
-p <- terra::densify(p, 1000)
+p <- terra::densify(p, 1, flat = TRUE)  ## beware densify, we don't want great circles ...
+
 grd <- crs_grid(p, "EPSG:3577")
 terra::plot(grd); plot(project(p, "EPSG:3577"), add = TRUE)
 ```
@@ -216,8 +217,9 @@ m <- reproj::reproj_xy(do.call(cbind, maps::map(plot = F)[1:2]), "EPSG:3577", so
 lines(m)
 ```
 
-<img src="man/figures/README-ozex-1.png" width="100%" /> \## Code of
-Conduct
+<img src="man/figures/README-ozex-1.png" width="100%" />
+
+## Code of Conduct
 
 Please note that the realarea project is released with a [Contributor
 Code of
